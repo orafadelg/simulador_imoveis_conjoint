@@ -306,4 +306,4 @@ chart_rank = alt.Chart(rank_df).mark_bar().encode(
 ).properties(title="Uplift de Intenção (p.p.) — A vs B", height=240)
 st.altair_chart(chart_rank, use_container_width=True)
 
-st.caption("Números fictícios para demonstração. Substitua por coeficientes/custos reais quando disponíveis.")
+st.caption("Números fictícios para demonstração. No projeto final vamos substituir as utilidades..")
