@@ -7,34 +7,17 @@ import altair as alt
 # CONFIG
 # =========================
 st.set_page_config(page_title="Simulador Conjoint - Empreendimentos", layout="wide")
-st.title("🏗️ Simulador de Conjoint para Empreendimentos (Reativo)")
-st.write("Ajuste as combinações e veja, em tempo real, o **SCORE de preferência**, a **intenção incremental** e o **custo** por opção.")
+st.title("🏗️ Simulador de Conjoint para Empreendimentos (A/B)")
+st.write("Ajuste as combinações A e B e veja, em tempo real, o **SCORE de preferência**, a **intenção incremental** e o **custo** por opção.")
 
-# Estilinho leve para separar visualmente os blocos
+# Estilo leve para separar visualmente os cards
 st.markdown("""
 <style>
 .card {
-  border: 1px solid #e6e6e6;
-  border-radius: 12px;
-  padding: 14px 14px 8px 14px;
-  background-color: #ffffff;
-  box-shadow: 0 0 4px rgba(0,0,0,0.03);
+  border: 1px solid #e6e6e6; border-radius: 12px; padding: 14px 14px 8px 14px;
+  background-color: #ffffff; box-shadow: 0 0 4px rgba(0,0,0,0.03); margin-bottom: 8px;
 }
-.card h3 {
-  margin-top: 0.2rem;
-  margin-bottom: 0.6rem;
-}
-.section {
-  border: 1px dashed #ddd;
-  border-radius: 12px;
-  padding: 12px;
-  margin-top: 6px;
-}
-.metric-row {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
-}
+.card h3 { margin-top: 0.2rem; margin-bottom: 0.6rem; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -154,9 +137,9 @@ def summarize_option(name, option_dict, seg_mult):
     }
 
 # =========================
-# UI: 3 COLUNAS COM "CARDS"
+# UI: DUAS COLUNAS COM "CARDS"
 # =========================
-st.subheader("1) Três combinações (A, B e C)")
+st.subheader("1) Duas combinações (A e B)")
 
 def option_card(name_key: str, title: str):
     st.markdown(f'<div class="card"><h3>{title}</h3>', unsafe_allow_html=True)
@@ -178,15 +161,13 @@ def option_card(name_key: str, title: str):
         "Itens Sociais Individuais": social_ind,
         "Facilites": facil
     }
-    summary = summarize_option(title.split()[-1], option, seg_mult)
+    summary = summarize_option(title[-1], option, seg_mult)
 
-    # Linha de métricas (3 colunas)
     m1, m2, m3 = st.columns(3)
     m1.metric("SCORE PREFERENCIA", f"{summary['SCORE PREFERENCIA']:.2f}")
     m2.metric("Conversão (p.p.)", f"{summary['Conversão (p.p.)']:.1f}")
     m3.metric("Custo (R$)", f"{summary['Custo (R$)']:,.0f}")
 
-    # Linha complementar (receita e líquido) – deixa mais “executivo”
     m4, m5 = st.columns(2)
     m4.metric("Receita +/unid (R$)", f"{summary['Receita +/unid (R$)']:,.0f}")
     m5.metric("Resultado Líquido +/unid (R$)", f"{summary['Resultado Líquido +/unid (R$)']:,.0f}")
@@ -194,65 +175,99 @@ def option_card(name_key: str, title: str):
     st.markdown('</div>', unsafe_allow_html=True)
     return option, summary
 
-colA, colB, colC = st.columns(3)
+colA, colB = st.columns(2)
 with colA:
     optA, sumA = option_card("A", "Combinação A")
 with colB:
     optB, sumB = option_card("B", "Combinação B")
-with colC:
-    optC, sumC = option_card("C", "Combinação C")
 
 # =========================
-# RESULTADOS CONSOLIDADOS
+# RESULTADOS CONSOLIDADOS (A vs B) c/ destaque verde/vermelho
 # =========================
-st.subheader("2) Comparativo consolidado")
+st.subheader("2) Comparativo A vs B com Destaque")
 
-results = [sumA, sumB, sumC]
-df = pd.DataFrame(results)
+# Monta dataframe comparativo (linhas = métricas, colunas = A/B)
+comp = pd.DataFrame({
+    "Métrica": [
+        "SCORE PREFERENCIA",
+        "Conversão (p.p.)",
+        "Intenção Nova (%)",
+        "Custo (R$)",
+        "Receita +/unid (R$)",
+        "Resultado Líquido +/unid (R$)"
+    ],
+    "A": [
+        sumA["SCORE PREFERENCIA"],
+        sumA["Conversão (p.p.)"],
+        sumA["Intenção Nova (%)"],
+        sumA["Custo (R$)"],
+        sumA["Receita +/unid (R$)"],
+        sumA["Resultado Líquido +/unid (R$)"]
+    ],
+    "B": [
+        sumB["SCORE PREFERENCIA"],
+        sumB["Conversão (p.p.)"],
+        sumB["Intenção Nova (%)"],
+        sumB["Custo (R$)"],
+        sumB["Receita +/unid (R$)"],
+        sumB["Resultado Líquido +/unid (R$)"]
+    ],
+})
 
-# Ranking por Conversão incremental
-rank_df = df.sort_values(by="Conversão (p.p.)", ascending=False)[["Opção", "Conversão (p.p.)"]]
+# Regras de “vencedor”: maior é melhor, EXCETO custo (menor é melhor)
+higher_better = {
+    "SCORE PREFERENCIA": True,
+    "Conversão (p.p.)": True,
+    "Intenção Nova (%)": True,
+    "Custo (R$)": False,
+    "Receita +/unid (R$)": True,
+    "Resultado Líquido +/unid (R$)": True
+}
+
+def highlight_winner(row):
+    metric = row["Métrica"]
+    a = row["A"]
+    b = row["B"]
+    hb = higher_better[metric]
+    style_a = ""
+    style_b = ""
+    if hb:
+        if a > b:
+            style_a = "background-color: #e7f7e7; color: #0f7b0f; font-weight: 600;"
+            style_b = "background-color: #fdeaea; color: #9b1c1c;"
+        elif b > a:
+            style_b = "background-color: #e7f7e7; color: #0f7b0f; font-weight: 600;"
+            style_a = "background-color: #fdeaea; color: #9b1c1c;"
+    else:  # menor é melhor (custo)
+        if a < b:
+            style_a = "background-color: #e7f7e7; color: #0f7b0f; font-weight: 600;"
+            style_b = "background-color: #fdeaea; color: #9b1c1c;"
+        elif b < a:
+            style_b = "background-color: #e7f7e7; color: #0f7b0f; font-weight: 600;"
+            style_a = "background-color: #fdeaea; color: #9b1c1c;"
+    return ["", style_a, style_b]  # primeira coluna (Métrica) sem estilo
+
+styled = comp.style.format({
+    "A": lambda v: f"{v:,.1f}" if isinstance(v, (int, float)) else v,
+    "B": lambda v: f"{v:,.1f}" if isinstance(v, (int, float)) else v
+}).apply(highlight_winner, axis=1)
+
+st.dataframe(styled, use_container_width=True)
+
+# Gráfico rápido de Uplift (para visual “quem ganha”)
+rank_df = pd.DataFrame({
+    "Opção": ["A", "B"],
+    "Conversão (p.p.)": [sumA["Conversão (p.p.)"], sumB["Conversão (p.p.)"]]
+})
+winner = "A" if sumA["Conversão (p.p.)"] > sumB["Conversão (p.p.)"] else "B"
+rank_df["Cor"] = rank_df["Opção"].apply(lambda x: "Vencedor" if x == winner else "Outro")
+
 chart_rank = alt.Chart(rank_df).mark_bar().encode(
-    x=alt.X("Conversão (p.p.):Q", title="Uplift de Intenção (pontos percentuais)"),
-    y=alt.Y("Opção:N", sort="-x"),
-    tooltip=["Opção", "Conversão (p.p.)"]
-).properties(title="Ranking por Uplift de Intenção", height=220)
-st.altair_chart(chart_rank, use_container_width=True)
-
-# Tabela “executiva”
-st.markdown("**Tabela resumida (por opção):**")
-cols_order = [
-    "Opção", "SCORE PREFERENCIA", "Intenção Base", "Conversão (p.p.)",
-    "Intenção Nova (%)", "Custo (R$)", "Receita +/unid (R$)", "Resultado Líquido +/unid (R$)"
-]
-st.dataframe(
-    df[cols_order].style.format({
-        "SCORE PREFERENCIA": "{:.2f}",
-        "Intenção Base": "{:.0%}",
-        "Conversão (p.p.)": "{:.1f}",
-        "Intenção Nova (%)": "{:.0f}%",
-        "Custo (R$)": "R$ {:,.0f}",
-        "Receita +/unid (R$)": "R$ {:,.0f}",
-        "Resultado Líquido +/unid (R$)": "R$ {:,.0f}"
-    }),
-    use_container_width=True
-)
-
-# Custo vs Receita adicional (por unidade)
-st.subheader("3) Custo x Receita Adicional (por Unidade)")
-comp_df = df[["Opção", "Custo (R$)", "Receita +/unid (R$)", "Resultado Líquido +/unid (R$)"]]
-cost_rev_df = comp_df.melt(
-    id_vars=["Opção"],
-    value_vars=["Custo (R$)", "Receita +/unid (R$)"],
-    var_name="Métrica",
-    value_name="Valor (R$)"
-)
-chart_cost_rev = alt.Chart(cost_rev_df).mark_bar().encode(
     x=alt.X("Opção:N"),
-    y=alt.Y("Valor (R$):Q"),
-    color="Métrica:N",
-    tooltip=["Opção", "Métrica", "Valor (R$)"]
-).properties(title="Custo vs Receita adicional")
-st.altair_chart(chart_cost_rev, use_container_width=True)
+    y=alt.Y("Conversão (p.p.):Q"),
+    color=alt.Color("Cor:N", scale=alt.Scale(domain=["Vencedor","Outro"], range=["#0f7b0f","#9b1c1c"])),
+    tooltip=["Opção","Conversão (p.p.)"]
+).properties(title="Uplift de Intenção (p.p.) — A vs B", height=240)
+st.altair_chart(chart_rank, use_container_width=True)
 
 st.caption("Números fictícios para demonstração. Substitua por coeficientes/custos reais quando disponíveis.")
