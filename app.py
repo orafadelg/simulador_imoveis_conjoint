@@ -1,3 +1,11 @@
+Aqui está o código atualizado com:
+
+* Opções dos **selectboxes** exibindo os **pesos (utilidades)** entre parênteses.
+* Novo bloco **“Fatores que mais pesam (por combinação)”** logo após as métricas dos cards, ranqueando os fatores selecionados e seus pesos (ajustados pelo segmento), em ordem de impacto (valor absoluto).
+
+> Substitua seu `app.py` por este.
+
+```python
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -236,4 +244,117 @@ with colA2:
 
     st.markdown('<div class="metric-grid">', unsafe_allow_html=True)
     for m in ROW1:
-        clsA, _ = winner_class(m, sum
+        clsA, _ = winner_class(m, sumA[m], sumB[m])
+        st.markdown(badge(m, FMT[m](sumA[m]), clsA), unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    st.markdown('<div class="metric-grid">', unsafe_allow_html=True)
+    for m in ROW2:
+        clsA, _ = winner_class(m, sumA[m], sumB[m])
+        st.markdown(badge(m, FMT[m](sumA[m]), clsA), unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
+
+with colB2:
+    st.markdown('<div class="card">', unsafe_allow_html=True)
+    st.markdown("#### Métricas — B")
+
+    st.markdown('<div class="metric-grid">', unsafe_allow_html=True)
+    for m in ROW1:
+        _, clsB = winner_class(m, sumA[m], sumB[m])
+        st.markdown(badge(m, FMT[m](sumB[m]), clsB), unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    st.markdown('<div class="metric-grid">', unsafe_allow_html=True)
+    for m in ROW2:
+        _, clsB = winner_class(m, sumA[m], sumB[m])
+        st.markdown(badge(m, FMT[m](sumB[m]), clsB), unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
+
+# =========================
+# 2) FATORES QUE MAIS PESAM (por combinação)
+# =========================
+st.subheader("2) Fatores que mais pesam (por combinação)")
+
+def contribution_df(option_dict, seg_mult):
+    rows = []
+    # utilidades ajustadas por fator (do nível selecionado)
+    rows.append(("Parede Hidráulica", option_dict["Parede Hidráulica"], impact_parede[option_dict["Parede Hidráulica"]] * seg_mult))
+    rows.append(("Piso Sala/Quarto", option_dict["Piso Sala/Quarto"], impact_piso_sala_quarto[option_dict["Piso Sala/Quarto"]] * seg_mult))
+    rows.append(("Bancadas", option_dict["Bancadas"], impact_bancadas[option_dict["Bancadas"]] * seg_mult))
+    rows.append(("Itens Esportivos", option_dict["Itens Esportivos"], impact_itens_esportivos[option_dict["Itens Esportivos"]] * seg_mult))
+    rows.append(("Itens Sociais Individuais", option_dict["Itens Sociais Individuais"], impact_itens_sociais_ind[option_dict["Itens Sociais Individuais"]] * seg_mult))
+    rows.append(("Facilites", option_dict["Facilites"], impact_facilites[option_dict["Facilites"]] * seg_mult))
+    dfc = pd.DataFrame(rows, columns=["Fator", "Nível Selecionado", "Peso (ajustado)"])
+    dfc["|Peso|"] = dfc["Peso (ajustado)"].abs()
+    return dfc.sort_values(by="|Peso|", ascending=False)
+
+cA, cB = st.columns(2)
+with cA:
+    st.markdown("**Combinação A**")
+    dfA = contribution_df(optA, seg_mult)
+    st.dataframe(dfA[["Fator", "Nível Selecionado", "Peso (ajustado)"]].style.format({"Peso (ajustado)": "{:+.2f}"}), use_container_width=True)
+with cB:
+    st.markdown("**Combinação B**")
+    dfB = contribution_df(optB, seg_mult)
+    st.dataframe(dfB[["Fator", "Nível Selecionado", "Peso (ajustado)"]].style.format({"Peso (ajustado)": "{:+.2f}"}), use_container_width=True)
+
+# =========================
+# 3) COMPARATIVO CONSOLIDADO
+# =========================
+st.subheader("3) Comparativo consolidado")
+
+comp = pd.DataFrame({
+    "Métrica": list(HIGHER_BETTER.keys()),
+    "A": [sumA[m] for m in HIGHER_BETTER.keys()],
+    "B": [sumB[m] for m in HIGHER_BETTER.keys()],
+})
+
+def highlight_winner(row):
+    metric = row["Métrica"]; a, b = row["A"], row["B"]
+    hb = HIGHER_BETTER[metric]
+    style_a = style_b = ""
+    if abs(a - b) < 1e-9:
+        return ["", "", ""]
+    if hb:  # maior é melhor
+        if a > b:
+            style_a = "background-color: #e7f7e7; color: #0f7b0f; font-weight: 600;"
+            style_b = "background-color: #fdeaea; color: #9b1c1c;"
+        else:
+            style_b = "background-color: #e7f7e7; color: #0f7b0f; font-weight: 600;"
+            style_a = "background-color: #fdeaea; color: #9b1c1c;"
+    else:   # menor é melhor (custo)
+        if a < b:
+            style_a = "background-color: #e7f7e7; color: #0f7b0f; font-weight: 600;"
+            style_b = "background-color: #fdeaea; color: #9b1c1c;"
+        else:
+            style_b = "background-color: #e7f7e7; color: #0f7b0f; font-weight: 600;"
+            style_a = "background-color: #fdeaea; color: #9b1c1c;"
+    return ["", style_a, style_b]
+
+styled = comp.style.format({
+    "A": lambda v: f"{v:,.1f}" if isinstance(v, (int, float)) else v,
+    "B": lambda v: f"{v:,.1f}" if isinstance(v, (int, float)) else v
+}).apply(highlight_winner, axis=1)
+
+st.dataframe(styled, use_container_width=True)
+
+# Gráfico rápido de Uplift (A vs B)
+rank_df = pd.DataFrame({
+    "Opção": ["A", "B"],
+    "Conversão (p.p.)": [sumA["Conversão (p.p.)"], sumB["Conversão (p.p.)"]],
+})
+winner = "A" if sumA["Conversão (p.p.)"] > sumB["Conversão (p.p.)"] else "B"
+rank_df["Cor"] = rank_df["Opção"].apply(lambda x: "Vencedor" if x == winner else "Outro")
+
+chart_rank = alt.Chart(rank_df).mark_bar().encode(
+    x=alt.X("Opção:N"),
+    y=alt.Y("Conversão (p.p.):Q"),
+    color=alt.Color("Cor:N", scale=alt.Scale(domain=["Vencedor","Outro"], range=["#0f7b0f","#9b1c1c"])),
+    tooltip=["Opção","Conversão (p.p.)"]
+).properties(title="Uplift de Intenção (p.p.) — A vs B", height=240)
+st.altair_chart(chart_rank, use_container_width=True)
+
+st.caption("Números fictícios para demonstração. No projeto final vamos substituir as utilidades/custos por coeficientes reais calibrados.")
+```
