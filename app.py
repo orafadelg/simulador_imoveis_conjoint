@@ -283,49 +283,47 @@ with cB:
     dfB = contribution_df(optB, seg_mult)
     st.dataframe(dfB[["Fator", "Nível Selecionado", "Peso (ajustado)"]].style.format({"Peso (ajustado)": "{:+.2f}"}), use_container_width=True)
 
-def fatores_ordenados(option_dict, seg_mult):
-    fatores = []
-    for nome, valor in option_dict.items():
-        if nome == "Parede Hidráulica":
-            peso = impact_parede[valor]
-        elif nome == "Piso Sala/Quarto":
-            peso = impact_piso_sala_quarto[valor]
-        elif nome == "Bancadas":
-            peso = impact_bancadas[valor]
-        elif nome == "Itens Esportivos":
-            peso = impact_itens_esportivos[valor]
-        elif nome == "Itens Sociais Individuais":
-            peso = impact_itens_sociais_ind[valor]
-        elif nome == "Facilites":
-            peso = impact_facilites[valor]
-        fatores.append((nome + " — " + valor, peso * seg_mult))
-    # Ordenar por valor absoluto (maior peso primeiro)
-    fatores.sort(key=lambda x: abs(x[1]), reverse=True)
-    return fatores
+st.subheader("Fatores que mais pesam — gráficos por combinação")
 
-# Obter dados das duas combinações
-fatores_A = fatores_ordenados(optA, seg_mult)
-fatores_B = fatores_ordenados(optB, seg_mult)
+gA, gB = st.columns(2)
 
-# DataFrame para gráfico
-df_fatores = pd.DataFrame({
-    "Fator": [f for f, _ in fatores_A] + [f for f, _ in fatores_B],
-    "Peso Ajustado": [p for _, p in fatores_A] + [p for _, p in fatores_B],
-    "Combinação": ["A"] * len(fatores_A) + ["B"] * len(fatores_B)
-})
+with gA:
+    dfA_chart = dfA[["Fator", "Peso (ajustado)"]].copy()
+    dfA_chart["Abs"] = dfA_chart["Peso (ajustado)"].abs()
 
-# Gráfico de barras horizontais
-chart_fatores = alt.Chart(df_fatores).mark_bar().encode(
-    x=alt.X("Peso Ajustado:Q", title="Peso Ajustado"),
-    y=alt.Y("Fator:N", sort="-x", title="Fator"),
-    color=alt.Color("Combinação:N", scale=alt.Scale(domain=["A", "B"], range=["#1f77b4", "#ff7f0e"])),
-    tooltip=["Combinação", "Fator", alt.Tooltip("Peso Ajustado:Q", format=".2f")]
-).properties(
-    title="Fatores mais relevantes por combinação",
-    height=300
-)
+    chartA = alt.Chart(dfA_chart).mark_bar().encode(
+        x=alt.X("Peso (ajustado):Q", title="Peso Ajustado"),
+        y=alt.Y("Fator:N",
+                sort=alt.SortField(field="Abs", order="descending"),
+                title="Fator"),
+        tooltip=[
+            alt.Tooltip("Fator:N"),
+            alt.Tooltip("Peso (ajustado):Q", format="+.2f")
+        ]
+    ).properties(
+        title="Combinação A — Fatores selecionados",
+        height=280
+    )
+    st.altair_chart(chartA, use_container_width=True)
 
-st.altair_chart(chart_fatores, use_container_width=True)
+with gB:
+    dfB_chart = dfB[["Fator", "Peso (ajustado)"]].copy()
+    dfB_chart["Abs"] = dfB_chart["Peso (ajustado)"].abs()
+
+    chartB = alt.Chart(dfB_chart).mark_bar().encode(
+        x=alt.X("Peso (ajustado):Q", title="Peso Ajustado"),
+        y=alt.Y("Fator:N",
+                sort=alt.SortField(field="Abs", order="descending"),
+                title="Fator"),
+        tooltip=[
+            alt.Tooltip("Fator:N"),
+            alt.Tooltip("Peso (ajustado):Q", format="+.2f")
+        ]
+    ).properties(
+        title="Combinação B — Fatores selecionados",
+        height=280
+    )
+    st.altair_chart(chartB, use_container_width=True)
 
 
 # =========================
