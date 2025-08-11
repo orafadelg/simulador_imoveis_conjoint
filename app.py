@@ -1,11 +1,3 @@
-Aqui está o código atualizado com:
-
-* Opções dos **selectboxes** exibindo os **pesos (utilidades)** entre parênteses.
-* Novo bloco **“Fatores que mais pesam (por combinação)”** logo após as métricas dos cards, ranqueando os fatores selecionados e seus pesos (ajustados pelo segmento), em ordem de impacto (valor absoluto).
-
-> Substitua seu `app.py` por este.
-
-```python
 import streamlit as st
 import pandas as pd
 import numpy as np
