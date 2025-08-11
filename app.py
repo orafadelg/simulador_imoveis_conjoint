@@ -1,7 +1,3 @@
-Ops, isso acontece quando algum texto explicativo caiu dentro do arquivo .py. Abaixo vai **apenas o código** (UTF-8 no cabeçalho). Substitua tudo no `app.py` por ele.
-
-```python
-# -*- coding: utf-8 -*-
 import streamlit as st
 import pandas as pd
 import numpy as np
