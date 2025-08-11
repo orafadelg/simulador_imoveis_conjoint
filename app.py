@@ -283,49 +283,55 @@ with cB:
     dfB = contribution_df(optB, seg_mult)
     st.dataframe(dfB[["Fator", "Nível Selecionado", "Peso (ajustado)"]].style.format({"Peso (ajustado)": "{:+.2f}"}), use_container_width=True)
 
-st.subheader("Fatores que mais pesam — gráficos por combinação")
+st.subheader("Fatores (níveis selecionados) — impacto por combinação")
 
 gA, gB = st.columns(2)
 
 with gA:
-    dfA_chart = dfA[["Fator", "Peso (ajustado)"]].copy()
+    # Usamos o Nível Selecionado como rótulo, ordenando pelo |peso| em ordem decrescente
+    dfA_chart = dfA[["Fator", "Nível Selecionado", "Peso (ajustado)"]].copy()
     dfA_chart["Abs"] = dfA_chart["Peso (ajustado)"].abs()
 
     chartA = alt.Chart(dfA_chart).mark_bar().encode(
         x=alt.X("Peso (ajustado):Q", title="Peso Ajustado"),
-        y=alt.Y("Fator:N",
-                sort=alt.SortField(field="Abs", order="descending"),
-                title="Fator"),
+        y=alt.Y(
+            "Nível Selecionado:N",
+            sort=alt.SortField(field="Abs", order="descending"),
+            title="Nível Selecionado"
+        ),
         tooltip=[
+            alt.Tooltip("Nível Selecionado:N", title="Nível"),
             alt.Tooltip("Fator:N"),
-            alt.Tooltip("Peso (ajustado):Q", format="+.2f")
+            alt.Tooltip("Peso (ajustado):Q", format="+.2f", title="Peso")
         ]
     ).properties(
-        title="Combinação A — Fatores selecionados",
+        title="Combinação A — Níveis selecionados (ordenado por impacto)",
         height=280
     )
     st.altair_chart(chartA, use_container_width=True)
 
 with gB:
-    dfB_chart = dfB[["Fator", "Peso (ajustado)"]].copy()
+    dfB_chart = dfB[["Fator", "Nível Selecionado", "Peso (ajustado)"]].copy()
     dfB_chart["Abs"] = dfB_chart["Peso (ajustado)"].abs()
 
     chartB = alt.Chart(dfB_chart).mark_bar().encode(
         x=alt.X("Peso (ajustado):Q", title="Peso Ajustado"),
-        y=alt.Y("Fator:N",
-                sort=alt.SortField(field="Abs", order="descending"),
-                title="Fator"),
+        y=alt.Y(
+            "Nível Selecionado:N",
+            sort=alt.SortField(field="Abs", order="descending"),
+            title="Nível Selecionado"
+        ),
         tooltip=[
+            alt.Tooltip("Nível Selecionado:N", title="Nível"),
             alt.Tooltip("Fator:N"),
-            alt.Tooltip("Peso (ajustado):Q", format="+.2f")
+            alt.Tooltip("Peso (ajustado):Q", format="+.2f", title="Peso")
         ]
     ).properties(
-        title="Combinação B — Fatores selecionados",
+        title="Combinação B — Níveis selecionados (ordenado por impacto)",
         height=280
     )
     st.altair_chart(chartB, use_container_width=True)
-
-
+  
 # =========================
 # 3) COMPARATIVO CONSOLIDADO
 # =========================
