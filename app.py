@@ -100,6 +100,20 @@ with st.sidebar:
     st.caption(f"Multiplicador de segmento (interno): **{seg_mult:.2f}**")
 
 # =========================
+# HELPERS PARA SELECTBOX COM PESO
+# =========================
+def fmt_with_weight(mapping):
+    """Retorna uma função format_func para selectbox: 'Nível (+0.12)'."""
+    return lambda k: f"{k} ({mapping[k]:+0.2f})"
+
+fmt_parede = fmt_with_weight(impact_parede)
+fmt_piso   = fmt_with_weight(impact_piso_sala_quarto)
+fmt_banc   = fmt_with_weight(impact_bancadas)
+fmt_esp    = fmt_with_weight(impact_itens_esportivos)
+fmt_soc    = fmt_with_weight(impact_itens_sociais_ind)
+fmt_fac    = fmt_with_weight(impact_facilites)
+
+# =========================
 # FUNÇÕES DE CÁLCULO
 # =========================
 def compute_score_and_cost(option_dict):
@@ -180,13 +194,13 @@ with colA:
     st.markdown("### Combinação A")
     c1, c2 = st.columns(2)
     with c1:
-        A_parede = st.selectbox("Parede Hidráulica", list(impact_parede.keys()), key="A_parede")
-        A_piso = st.selectbox("Piso Sala/Quarto", list(impact_piso_sala_quarto.keys()), key="A_piso")
-        A_banc = st.selectbox("Bancadas", list(impact_bancadas.keys()), key="A_banc")
+        A_parede = st.selectbox("Parede Hidráulica", list(impact_parede.keys()), key="A_parede", format_func=fmt_parede)
+        A_piso = st.selectbox("Piso Sala/Quarto", list(impact_piso_sala_quarto.keys()), key="A_piso", format_func=fmt_piso)
+        A_banc = st.selectbox("Bancadas", list(impact_bancadas.keys()), key="A_banc", format_func=fmt_banc)
     with c2:
-        A_esp = st.selectbox("Itens Esportivos", list(impact_itens_esportivos.keys()), key="A_esportivo")
-        A_soc = st.selectbox("Itens Sociais Individuais", list(impact_itens_sociais_ind.keys()), key="A_social")
-        A_fac = st.selectbox("Facilites", list(impact_facilites.keys()), key="A_facil")
+        A_esp = st.selectbox("Itens Esportivos", list(impact_itens_esportivos.keys()), key="A_esportivo", format_func=fmt_esp)
+        A_soc = st.selectbox("Itens Sociais Individuais", list(impact_itens_sociais_ind.keys()), key="A_social", format_func=fmt_soc)
+        A_fac = st.selectbox("Facilites", list(impact_facilites.keys()), key="A_facil", format_func=fmt_fac)
     st.markdown('</div>', unsafe_allow_html=True)
 
 with colB:
@@ -194,13 +208,13 @@ with colB:
     st.markdown("### Combinação B")
     c1, c2 = st.columns(2)
     with c1:
-        B_parede = st.selectbox("Parede Hidráulica", list(impact_parede.keys()), key="B_parede")
-        B_piso = st.selectbox("Piso Sala/Quarto", list(impact_piso_sala_quarto.keys()), key="B_piso")
-        B_banc = st.selectbox("Bancadas", list(impact_bancadas.keys()), key="B_banc")
+        B_parede = st.selectbox("Parede Hidráulica", list(impact_parede.keys()), key="B_parede", format_func=fmt_parede)
+        B_piso = st.selectbox("Piso Sala/Quarto", list(impact_piso_sala_quarto.keys()), key="B_piso", format_func=fmt_piso)
+        B_banc = st.selectbox("Bancadas", list(impact_bancadas.keys()), key="B_banc", format_func=fmt_banc)
     with c2:
-        B_esp = st.selectbox("Itens Esportivos", list(impact_itens_esportivos.keys()), key="B_esportivo")
-        B_soc = st.selectbox("Itens Sociais Individuais", list(impact_itens_sociais_ind.keys()), key="B_social")
-        B_fac = st.selectbox("Facilites", list(impact_facilites.keys()), key="B_facil")
+        B_esp = st.selectbox("Itens Esportivos", list(impact_itens_esportivos.keys()), key="B_esportivo", format_func=fmt_esp)
+        B_soc = st.selectbox("Itens Sociais Individuais", list(impact_itens_sociais_ind.keys()), key="B_social", format_func=fmt_soc)
+        B_fac = st.selectbox("Facilites", list(impact_facilites.keys()), key="B_facil", format_func=fmt_fac)
     st.markdown('</div>', unsafe_allow_html=True)
 
 optA = {"Parede Hidráulica": A_parede, "Piso Sala/Quarto": A_piso, "Bancadas": A_banc,
@@ -222,88 +236,4 @@ with colA2:
 
     st.markdown('<div class="metric-grid">', unsafe_allow_html=True)
     for m in ROW1:
-        clsA, _ = winner_class(m, sumA[m], sumB[m])
-        st.markdown(badge(m, FMT[m](sumA[m]), clsA), unsafe_allow_html=True)
-    st.markdown('</div>', unsafe_allow_html=True)
-
-    st.markdown('<div class="metric-grid">', unsafe_allow_html=True)
-    for m in ROW2:
-        clsA, _ = winner_class(m, sumA[m], sumB[m])
-        st.markdown(badge(m, FMT[m](sumA[m]), clsA), unsafe_allow_html=True)
-    st.markdown('</div>', unsafe_allow_html=True)
-    st.markdown('</div>', unsafe_allow_html=True)
-
-with colB2:
-    st.markdown('<div class="card">', unsafe_allow_html=True)
-    st.markdown("#### Métricas — B")
-
-    st.markdown('<div class="metric-grid">', unsafe_allow_html=True)
-    for m in ROW1:
-        _, clsB = winner_class(m, sumA[m], sumB[m])
-        st.markdown(badge(m, FMT[m](sumB[m]), clsB), unsafe_allow_html=True)
-    st.markdown('</div>', unsafe_allow_html=True)
-
-    st.markdown('<div class="metric-grid">', unsafe_allow_html=True)
-    for m in ROW2:
-        _, clsB = winner_class(m, sumA[m], sumB[m])
-        st.markdown(badge(m, FMT[m](sumB[m]), clsB), unsafe_allow_html=True)
-    st.markdown('</div>', unsafe_allow_html=True)
-    st.markdown('</div>', unsafe_allow_html=True)
-
-# =========================
-# RESULTADOS CONSOLIDADOS
-# =========================
-st.subheader("2) Comparativo consolidado")
-
-comp = pd.DataFrame({
-    "Métrica": list(HIGHER_BETTER.keys()),
-    "A": [sumA[m] for m in HIGHER_BETTER.keys()],
-    "B": [sumB[m] for m in HIGHER_BETTER.keys()],
-})
-
-def highlight_winner(row):
-    metric = row["Métrica"]; a, b = row["A"], row["B"]
-    hb = HIGHER_BETTER[metric]
-    style_a = style_b = ""
-    if abs(a - b) < 1e-9:
-        return ["", "", ""]
-    if hb:  # maior é melhor
-        if a > b:
-            style_a = "background-color: #e7f7e7; color: #0f7b0f; font-weight: 600;"
-            style_b = "background-color: #fdeaea; color: #9b1c1c;"
-        else:
-            style_b = "background-color: #e7f7e7; color: #0f7b0f; font-weight: 600;"
-            style_a = "background-color: #fdeaea; color: #9b1c1c;"
-    else:   # menor é melhor (custo)
-        if a < b:
-            style_a = "background-color: #e7f7e7; color: #0f7b0f; font-weight: 600;"
-            style_b = "background-color: #fdeaea; color: #9b1c1c;"
-        else:
-            style_b = "background-color: #e7f7e7; color: #0f7b0f; font-weight: 600;"
-            style_a = "background-color: #fdeaea; color: #9b1c1c;"
-    return ["", style_a, style_b]
-
-styled = comp.style.format({
-    "A": lambda v: f"{v:,.1f}" if isinstance(v, (int, float)) else v,
-    "B": lambda v: f"{v:,.1f}" if isinstance(v, (int, float)) else v
-}).apply(highlight_winner, axis=1)
-
-st.dataframe(styled, use_container_width=True)
-
-# Gráfico rápido de Uplift (A vs B)
-rank_df = pd.DataFrame({
-    "Opção": ["A", "B"],
-    "Conversão (p.p.)": [sumA["Conversão (p.p.)"], sumB["Conversão (p.p.)"]],
-})
-winner = "A" if sumA["Conversão (p.p.)"] > sumB["Conversão (p.p.)"] else "B"
-rank_df["Cor"] = rank_df["Opção"].apply(lambda x: "Vencedor" if x == winner else "Outro")
-
-chart_rank = alt.Chart(rank_df).mark_bar().encode(
-    x=alt.X("Opção:N"),
-    y=alt.Y("Conversão (p.p.):Q"),
-    color=alt.Color("Cor:N", scale=alt.Scale(domain=["Vencedor","Outro"], range=["#0f7b0f","#9b1c1c"])),
-    tooltip=["Opção","Conversão (p.p.)"]
-).properties(title="Uplift de Intenção (p.p.) — A vs B", height=240)
-st.altair_chart(chart_rank, use_container_width=True)
-
-st.caption("Números fictícios para demonstração. No projeto final vamos substituir as utilidades..")
+        clsA, _ = winner_class(m, sum
