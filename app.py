@@ -340,4 +340,3 @@ chart_rank = alt.Chart(rank_df).mark_bar().encode(
 st.altair_chart(chart_rank, use_container_width=True)
 
 st.caption("Números fictícios para demonstração. No projeto final vamos substituir as utilidades/custos por coeficientes reais calibrados.")
-```
