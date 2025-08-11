@@ -1,3 +1,7 @@
+Ops, isso acontece quando algum texto explicativo caiu dentro do arquivo .py. Abaixo vai **apenas o código** (UTF-8 no cabeçalho). Substitua tudo no `app.py` por ele.
+
+```python
+# -*- coding: utf-8 -*-
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -8,7 +12,7 @@ import altair as alt
 # =========================
 st.set_page_config(page_title="Simulador Conjoint - Empreendimentos (A/B)", layout="wide")
 st.title("🏗️ Simulador de Conjoint para Empreendimentos (A/B)")
-st.write("Ajuste as combinações A e B e veja, em tempo real, o **SCORE de preferência**, a **intenção incremental** e o **custo**, com destaque de vencedor diretamente nos cards.")
+st.write("Ajuste as combinações A e B e veja, em tempo real, o SCORE de preferência, a intenção incremental e o custo, com destaque de vencedor diretamente nos cards.")
 
 # =========================
 # ESTILO (cards + métricas coloridas)
@@ -21,9 +25,6 @@ st.markdown("""
 }
 .metric-grid {
   display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 8px;
-}
-.metric-grid-2 {
-  display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 8px;
 }
 .metric-box {
   border: 1px solid #eee; border-radius: 10px; padding: 10px;
@@ -68,12 +69,12 @@ impact_itens_sociais_ind = {"Espaço pizza": 0.04, "Churrasqueira": 0.09}
 impact_facilites = {"Lavanderia": 0.06, "Pet care": 0.03}
 
 # Custos adicionais (R$ por unidade)
-custo_parede = {"Apenas cerâmica acima da bancada": 0, "Cerâmica do piso até 150cm": 3_500}
-custo_piso_sala_quarto = {"Sem piso": 0, "Piso laminado": 8_000}
-custo_bancadas = {"Louça + pia inox": 0, "Granito": 6_500}
-custo_itens_esportivos = {"Mini quadra recreativa": 15_000, "Piscina": 50_000}
-custo_itens_sociais_ind = {"Espaço pizza": 4_000, "Churrasqueira": 12_000}
-custo_facilites = {"Lavanderia": 5_000, "Pet care": 2_500}
+custo_parede = {"Apenas cerâmica acima da bancada": 0, "Cerâmica do piso até 150cm": 3500}
+custo_piso_sala_quarto = {"Sem piso": 0, "Piso laminado": 8000}
+custo_bancadas = {"Louça + pia inox": 0, "Granito": 6500}
+custo_itens_esportivos = {"Mini quadra recreativa": 15000, "Piscina": 50000}
+custo_itens_sociais_ind = {"Espaço pizza": 4000, "Churrasqueira": 12000}
+custo_facilites = {"Lavanderia": 5000, "Pet care": 2500}
 
 # =========================
 # AJUSTES POR SEGMENTO (filtros)
@@ -103,7 +104,7 @@ with st.sidebar:
 # HELPERS PARA SELECTBOX COM PESO
 # =========================
 def fmt_with_weight(mapping):
-    """Retorna uma função format_func para selectbox: 'Nível (+0.12)'."""
+    # Exibe: Nível (+0.12)
     return lambda k: f"{k} ({mapping[k]:+0.2f})"
 
 fmt_parede = fmt_with_weight(impact_parede)
@@ -153,13 +154,12 @@ def summarize_option(name, option_dict, seg_mult):
     }
 
 def winner_class(metric_name, a_val, b_val):
-    """Retorna a classe CSS ('win'|'lose'|'tie') para A e B, respeitando HIGHER_BETTER."""
     hb = HIGHER_BETTER.get(metric_name, True)
     if abs(a_val - b_val) < 1e-9:
         return "tie", "tie"
-    if hb:  # maior é melhor
+    if hb:
         return ("win", "lose") if a_val > b_val else ("lose", "win")
-    else:   # menor é melhor (apenas custo)
+    else:
         return ("win", "lose") if a_val < b_val else ("lose", "win")
 
 def badge(label, value, css_class="tie"):
@@ -233,13 +233,11 @@ colA2, colB2 = st.columns(2)
 with colA2:
     st.markdown('<div class="card">', unsafe_allow_html=True)
     st.markdown("#### Métricas — A")
-
     st.markdown('<div class="metric-grid">', unsafe_allow_html=True)
     for m in ROW1:
         clsA, _ = winner_class(m, sumA[m], sumB[m])
         st.markdown(badge(m, FMT[m](sumA[m]), clsA), unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
-
     st.markdown('<div class="metric-grid">', unsafe_allow_html=True)
     for m in ROW2:
         clsA, _ = winner_class(m, sumA[m], sumB[m])
@@ -250,13 +248,11 @@ with colA2:
 with colB2:
     st.markdown('<div class="card">', unsafe_allow_html=True)
     st.markdown("#### Métricas — B")
-
     st.markdown('<div class="metric-grid">', unsafe_allow_html=True)
     for m in ROW1:
         _, clsB = winner_class(m, sumA[m], sumB[m])
         st.markdown(badge(m, FMT[m](sumB[m]), clsB), unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
-
     st.markdown('<div class="metric-grid">', unsafe_allow_html=True)
     for m in ROW2:
         _, clsB = winner_class(m, sumA[m], sumB[m])
@@ -271,7 +267,6 @@ st.subheader("2) Fatores que mais pesam (por combinação)")
 
 def contribution_df(option_dict, seg_mult):
     rows = []
-    # utilidades ajustadas por fator (do nível selecionado)
     rows.append(("Parede Hidráulica", option_dict["Parede Hidráulica"], impact_parede[option_dict["Parede Hidráulica"]] * seg_mult))
     rows.append(("Piso Sala/Quarto", option_dict["Piso Sala/Quarto"], impact_piso_sala_quarto[option_dict["Piso Sala/Quarto"]] * seg_mult))
     rows.append(("Bancadas", option_dict["Bancadas"], impact_bancadas[option_dict["Bancadas"]] * seg_mult))
@@ -309,14 +304,14 @@ def highlight_winner(row):
     style_a = style_b = ""
     if abs(a - b) < 1e-9:
         return ["", "", ""]
-    if hb:  # maior é melhor
+    if hb:
         if a > b:
             style_a = "background-color: #e7f7e7; color: #0f7b0f; font-weight: 600;"
             style_b = "background-color: #fdeaea; color: #9b1c1c;"
         else:
             style_b = "background-color: #e7f7e7; color: #0f7b0f; font-weight: 600;"
             style_a = "background-color: #fdeaea; color: #9b1c1c;"
-    else:   # menor é melhor (custo)
+    else:
         if a < b:
             style_a = "background-color: #e7f7e7; color: #0f7b0f; font-weight: 600;"
             style_b = "background-color: #fdeaea; color: #9b1c1c;"
